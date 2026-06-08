@@ -1,1 +1,246 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schreibcoach – Analyse pragmatischer Texte</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Serif+4:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1208;
+    --paper: #f5f0e8;
+    --paper-dark: #ede6d6;
+    --accent: #8b2e0f;
+    --accent-light: #c4541e;
+    --gold: #b8860b;
+    --muted: #6b5d4f;
+    --border: #c9bba8;
+    --hint-bg: #fdf6ec;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+  .container { max-width: 800px; margin: 0 auto; padding: 40px 24px 80px; }
 
+  header {
+    text-align: center;
+    padding: 48px 0 40px;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 40px;
+  }
+  .logo-mark {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: 'Playfair Display', serif; font-size: 13px;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px;
+  }
+  .logo-mark::before, .logo-mark::after { content: ''; display: block; width: 32px; height: 1px; background: var(--accent); }
+  h1 { font-family: 'Playfair Display', serif; font-size: clamp(28px,5vw,44px); font-weight: 700; line-height: 1.2; color: var(--ink); margin-bottom: 12px; }
+  .subtitle { color: var(--muted); font-style: italic; font-size: 16px; }
+
+  .card {
+    background: white; border: 1.5px solid var(--border); border-radius: 2px;
+    padding: 32px; margin-bottom: 28px; box-shadow: 0 2px 8px rgba(26,18,8,0.06);
+  }
+  .card h2 { font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 8px; color: var(--accent); }
+  .card > p { color: var(--muted); font-size: 15px; margin-bottom: 20px; font-style: italic; }
+
+  .mode-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .mode-btn {
+    padding: 16px 20px; border: 2px solid var(--border); background: var(--paper);
+    border-radius: 2px; cursor: pointer; text-align: left; transition: all 0.2s;
+    font-family: 'Source Serif 4', serif;
+  }
+  .mode-btn:hover { border-color: var(--accent-light); background: var(--hint-bg); }
+  .mode-btn.active { border-color: var(--accent); background: white; box-shadow: inset 3px 0 0 var(--accent); }
+  .mode-btn .mode-title { font-size: 15px; color: var(--ink); display: block; margin-bottom: 4px; }
+  .mode-btn .mode-desc { font-size: 13px; color: var(--muted); font-style: italic; }
+
+  textarea {
+    width: 100%; min-height: 280px; padding: 20px;
+    border: 1.5px solid var(--border); border-radius: 2px;
+    background: var(--paper); font-family: 'Source Serif 4', serif;
+    font-size: 15px; line-height: 1.8; color: var(--ink); resize: vertical; transition: border-color 0.2s;
+  }
+  textarea:focus { outline: none; border-color: var(--accent-light); background: white; }
+  .char-count { text-align: right; font-size: 13px; color: var(--muted); margin-top: 8px; font-style: italic; }
+
+  .submit-btn {
+    width: 100%; padding: 18px 32px; background: var(--accent); color: var(--paper);
+    border: none; border-radius: 2px; font-family: 'Playfair Display', serif;
+    font-size: 17px; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 10px; letter-spacing: 0.03em;
+  }
+  .submit-btn:hover:not(:disabled) { background: var(--accent-light); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(139,46,15,0.3); }
+  .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .loading { text-align: center; padding: 60px 40px; display: none; }
+  .quill-anim { font-size: 40px; display: block; margin-bottom: 16px; animation: bob 1.5s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-8px) rotate(5deg); } }
+  .loading p { color: var(--muted); font-style: italic; }
+
+  .response-card {
+    background: white; border: 1.5px solid var(--border); border-radius: 2px;
+    padding: 40px; margin-top: 28px; box-shadow: 0 2px 8px rgba(26,18,8,0.06);
+    display: none; animation: fadeUp 0.5s ease;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+  .response-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+  .mode-badge { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 12px; border: 1px solid var(--accent); color: var(--accent); border-radius: 2px; }
+
+  .response-body { color: var(--ink); line-height: 1.85; }
+  .response-body h3 { font-family: 'Playfair Display', serif; font-size: 17px; color: var(--accent); margin: 28px 0 10px; padding-left: 12px; border-left: 3px solid var(--gold); }
+  .response-body h3:first-child { margin-top: 0; }
+  .response-body p { margin-bottom: 14px; }
+  .response-body ul { padding-left: 24px; margin-bottom: 14px; }
+  .response-body li { margin-bottom: 8px; }
+  .response-body strong { color: var(--accent); font-weight: 600; }
+  .response-body em { color: var(--muted); }
+  .response-body blockquote { background: var(--hint-bg); border-left: 4px solid var(--gold); padding: 14px 20px; margin: 16px 0; font-style: italic; border-radius: 0 2px 2px 0; }
+
+  .reset-btn {
+    margin-top: 28px; padding: 12px 24px; background: transparent;
+    border: 1.5px solid var(--border); color: var(--muted); border-radius: 2px;
+    font-family: 'Source Serif 4', serif; font-size: 15px; cursor: pointer; transition: all 0.2s; width: 100%;
+  }
+  .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .error-msg { background: #fdf0f0; border: 1.5px solid #e88; border-radius: 2px; padding: 20px 24px; color: #8b2020; margin-top: 16px; display: none; font-size: 15px; }
+  .ornament { text-align: center; color: var(--gold); font-size: 20px; margin: 8px 0; letter-spacing: 0.3em; }
+
+  @media (max-width: 600px) { .mode-options { grid-template-columns: 1fr; } .card, .response-card { padding: 24px 20px; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo-mark">Gymnasium Lappersdorf · Deutsch Klasse 10</div>
+    <h1>Schreibcoach</h1>
+    <p class="subtitle">KI-Feedback zur Analyse pragmatischer Texte</p>
+  </header>
+
+  <div id="form-area">
+    <div class="card">
+      <h2>Was möchtest du?</h2>
+      <p>Wähle, wie die KI dir helfen soll.</p>
+      <div class="mode-options">
+        <button class="mode-btn active" data-mode="hinweise" onclick="selectMode(this)">
+          <span class="mode-title">✦ Hinweise &amp; Fragen</span>
+          <span class="mode-desc">Ich bekomme Denkanstöße und überarbeite selbst.</span>
+        </button>
+        <button class="mode-btn" data-mode="konkret" onclick="selectMode(this)">
+          <span class="mode-title">✦ Konkrete Rückmeldung</span>
+          <span class="mode-desc">Ich bekomme direktes Feedback zu meinem Text.</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="ornament">· · ·</div>
+
+    <div class="card">
+      <h2>Dein Aufsatz</h2>
+      <p>Füge deinen vollständigen Text hier ein.</p>
+      <textarea id="essay-input" placeholder="Schreibe oder füge deinen Aufsatz hier ein …" oninput="updateCount()"></textarea>
+      <div class="char-count" id="char-count">0 Zeichen</div>
+    </div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitEssay()">
+      <span>Feedback einholen</span><span>→</span>
+    </button>
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <div class="loading" id="loading">
+    <span class="quill-anim">✒</span>
+    <p>Die KI liest deinen Text …<br><em>Das dauert etwa 15–30 Sekunden.</em></p>
+  </div>
+
+  <div class="response-card" id="response-card">
+    <div class="response-header">
+      <span class="mode-badge" id="mode-badge">Hinweise &amp; Fragen</span>
+      <span style="color:var(--muted);font-size:14px;font-style:italic;">Lies aufmerksam und notiere, was du ändern möchtest.</span>
+    </div>
+    <div class="response-body" id="response-body"></div>
+    <button class="reset-btn" onclick="resetForm()">← Neuen Aufsatz einreichen</button>
+  </div>
+</div>
+
+<script>
+let selectedMode = 'hinweise';
+
+function selectMode(btn) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedMode = btn.dataset.mode;
+}
+
+function updateCount() {
+  const len = document.getElementById('essay-input').value.length;
+  document.getElementById('char-count').textContent = len.toLocaleString('de') + ' Zeichen';
+}
+
+async function submitEssay() {
+  const text = document.getElementById('essay-input').value.trim();
+  if (text.length < 100) {
+    showError('Bitte gib deinen vollständigen Aufsatz ein (mindestens 100 Zeichen).');
+    return;
+  }
+  hideError();
+  document.getElementById('form-area').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('response-card').style.display = 'none';
+
+  try {
+    const res = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ essay: text, mode: selectedMode })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Serverfehler');
+    renderResponse(data.feedback);
+  } catch (err) {
+    document.getElementById('form-area').style.display = 'block';
+    document.getElementById('loading').style.display = 'none';
+    showError('Fehler: ' + err.message);
+  }
+}
+
+function renderResponse(markdown) {
+  let html = markdown
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/### (.+)/g,'<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+    .replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
+  if (!html.startsWith('<h3>') && !html.startsWith('<p>')) html = '<p>' + html + '</p>';
+
+  document.getElementById('response-body').innerHTML = html;
+  document.getElementById('mode-badge').textContent = selectedMode === 'hinweise' ? 'Hinweise & Fragen' : 'Konkrete Rückmeldung';
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('response-card').style.display = 'block';
+  document.getElementById('response-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetForm() {
+  document.getElementById('form-area').style.display = 'block';
+  document.getElementById('response-card').style.display = 'none';
+  document.getElementById('essay-input').value = '';
+  document.getElementById('char-count').textContent = '0 Zeichen';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showError(msg) { const e = document.getElementById('error-msg'); e.textContent = msg; e.style.display = 'block'; }
+function hideError() { document.getElementById('error-msg').style.display = 'none'; }
+</script>
+</body>
+</html>
