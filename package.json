@@ -1,0 +1,12 @@
+{
+  "name": "schreibcoach",
+  "version": "1.0.0",
+  "description": "KI-Feedback für Aufsätze – Gymnasium Lappersdorf",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
