@@ -5,7 +5,7 @@
 //  Einfach ANTHROPIC_API_KEY unten eintragen, fertig.
 // ============================================================
 
-define('ANTHROPIC_API_KEY', 'sk-ant-HIER_DEINEN_KEY_EINTRAGEN');
+define('ANTHROPIC_API_KEY', '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');
 define('ANTHROPIC_MODEL',   'claude-sonnet-4-6');
 
 $SECTION_CRITERIA = [
