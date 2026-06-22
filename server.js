@@ -70,8 +70,8 @@ app.post('/api/transcribe', upload.single('file'), async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2024-06-01'
+        'x-api-key': process.env.ANTHROPIC_API_KEY
+        // note: removed 'anthropic-version' header because an invalid version caused errors
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
@@ -119,8 +119,8 @@ app.post('/api/feedback', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2024-06-01'
+        'x-api-key': process.env.ANTHROPIC_API_KEY
+        // note: removed 'anthropic-version' header because an invalid version caused errors
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
