@@ -63,16 +63,25 @@ app.post('/api/transcribe', upload.single('file'), async (req, res) => {
 
     contentBlocks.push({
       type: 'text',
-      text: 'Transkribiere den handschriftlichen oder gedruckten Text auf diesem Bild/Dokument vollständig und originalgetreu. Gib NUR den transkribierten Text aus, ohne Erklärungen oder Anmerkungen[...]
+      text: 'Transkribiere den handschriftlichen oder gedruckten Text auf diesem Bild/Dokument vollständig und originalgetreu. Gib NUR den transkribierten Text aus, ohne Erklärungen oder Anmerkungen[...]'
     });
+
+    // Build headers for the Anthropic request. anthropic-version is optional and only added
+    // if ANTHROPIC_API_VERSION is set in the environment. We avoid logging the API key value.
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY
+    };
+    if (process.env.ANTHROPIC_API_VERSION) {
+      headers['anthropic-version'] = process.env.ANTHROPIC_API_VERSION;
+    }
+
+    // Log which headers will be sent (DO NOT print the API key value).
+    console.log('Outgoing Anthropic request headers:', Object.keys(headers).map(k => k === 'x-api-key' ? 'x-api-key (REDACTED)' : k));
 
     const response = await fetch(ANTHROPIC_API_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY
-        // note: removed 'anthropic-version' header because an invalid version caused errors
-      },
+      headers,
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 4000,
@@ -115,13 +124,18 @@ app.post('/api/feedback', async (req, res) => {
     const sectionKey = section || 'ganz';
     const systemPrompt = buildSystemPrompt(mode, sectionKey);
 
+    const headers = {
+      'Content-Type': 'application/json',
+      'x-api-key': process.env.ANTHROPIC_API_KEY
+    };
+    if (process.env.ANTHROPIC_API_VERSION) {
+      headers['anthropic-version'] = process.env.ANTHROPIC_API_VERSION;
+    }
+    console.log('Outgoing Anthropic request headers:', Object.keys(headers).map(k => k === 'x-api-key' ? 'x-api-key (REDACTED)' : k));
+
     const response = await fetch(ANTHROPIC_API_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY
-        // note: removed 'anthropic-version' header because an invalid version caused errors
-      },
+      headers,
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 1500,
