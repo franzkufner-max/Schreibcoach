@@ -1,7 +1,0 @@
-node_modules/
-data/hot_deals.json
-data/hot_deals.csv
-data/seen_hot_deal_ids.json
-data/notify_outbox/
-memos/*.md
-!memos/.gitkeep
