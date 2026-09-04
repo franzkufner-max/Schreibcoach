@@ -1,0 +1,19 @@
+{
+  "_comment": "Ausgangslage aus ESt-Bescheid 2025. Erste Einschätzung, keine Steuerberatung.",
+  "taxContext": {
+    "zvE2025": 136658,
+    "marginalTaxRateAtBescheid": 0.42,
+    "zvEAfterCurrentLosses": 105000,
+    "effectiveMarginalTaxRate": 0.36,
+    "kirchensteuerAddOn": 0.02,
+    "kinderfreibetragKipppunktZvE": 80000,
+    "totalLossCorridorEURPerYear": 20000,
+    "maxPurchasesPerYear": 1
+  },
+  "existingObjects": [
+    { "id": "berlin-bestand-1", "city": "Berlin", "note": "Bereits vorhanden, laufender Verlust bereits im zvE 2025 (105.000 €) berücksichtigt." },
+    { "id": "berlin-bestand-2", "city": "Berlin", "note": "Bereits vorhanden, laufender Verlust bereits im zvE 2025 (105.000 €) berücksichtigt." }
+  ],
+  "purchases": {},
+  "screenerAcquisitions": []
+}

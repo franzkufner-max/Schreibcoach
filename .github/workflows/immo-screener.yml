@@ -1,0 +1,77 @@
+name: Immobilien-Deal-Screener
+
+# Läuft alle 15 Minuten und durchsucht die konfigurierten Portale/Adapter.
+# Ohne konfigurierte Secrets (APIFY_TOKEN etc.) läuft der Job im "mock"-Modus
+# gegen die Beispieldaten in immo-screener/data/deals_raw.sample.json — das
+# validiert die Pipeline, findet aber keine echten Angebote.
+#
+# Erste Einschätzung, keine Steuerberatung.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      source:
+        description: 'Adapter (kommagetrennt): mock, immoscout24_apify'
+        required: false
+        default: 'mock'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: immo-screener
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: immo-screener
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Screener laufen lassen
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          APIFY_IMMOSCOUT24_ACTOR_ID: ${{ secrets.APIFY_IMMOSCOUT24_ACTOR_ID }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          SOURCE="${{ inputs.source || 'mock' }}"
+          node src/run.js --source="$SOURCE" --notify
+
+      - name: Ergebnisse als Workflow-Artefakt hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: hot-deals-${{ github.run_id }}
+          path: |
+            immo-screener/data/hot_deals.json
+            immo-screener/data/hot_deals.csv
+            immo-screener/memos/*.md
+          if-no-files-found: ignore
+          retention-days: 14
+
+      # Optional: Zustand (Hot_Deals-Tabelle, gesehene IDs, Portfolio) dauerhaft
+      # im Repo festhalten. Standardmäßig AUS, um nicht ungefragt alle 15 Minuten
+      # Commits auf dem Branch zu erzeugen — mit dem Repository-Variable
+      # IMMO_SCREENER_AUTOCOMMIT=true aktivierbar (Settings -> Actions -> Variables).
+      - name: Zustand committen (nur wenn IMMO_SCREENER_AUTOCOMMIT=true)
+        if: ${{ vars.IMMO_SCREENER_AUTOCOMMIT == 'true' }}
+        run: |
+          git config user.name "immo-screener-bot"
+          git config user.email "immo-screener-bot@users.noreply.github.com"
+          git add data/hot_deals.json data/hot_deals.csv data/seen_hot_deal_ids.json data/portfolio_state.json memos/*.md 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(immo-screener): Hot-Deals-Update $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push
+          else
+            echo "Keine Änderungen."
+          fi
